@@ -1,0 +1,8 @@
+node_modules
+.vite
+.env.*
+coverage
+.DS_Store
+.turbo
+.idea
+.vscode

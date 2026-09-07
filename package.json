@@ -1,0 +1,24 @@
+{
+  "name": "cs542-art-auction",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently -n frontend,backend -c blue,green \"npm run dev --prefix frontend\" \"cd backend && python main.py\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Flippyfun02/cs542-art-auction.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Flippyfun02/cs542-art-auction/issues"
+  },
+  "homepage": "https://github.com/Flippyfun02/cs542-art-auction#readme",
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
+}

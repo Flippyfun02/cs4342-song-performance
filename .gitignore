@@ -6,3 +6,6 @@ coverage
 .turbo
 .idea
 .vscode
+
+# Local Kaggle data and generated cleaning outputs
+data/

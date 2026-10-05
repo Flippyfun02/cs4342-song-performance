@@ -1,6 +1,20 @@
-import {TextInput, Button, Group, Text, Select, Slider, NumberInput, SimpleGrid, Card, Title, Center} from "@mantine/core"
+import {
+    TextInput,
+    Button,
+    Group,
+    Text,
+    Select,
+    Slider,
+    NumberInput,
+    SimpleGrid,
+    Card,
+    Title,
+    Center,
+    Modal
+} from "@mantine/core"
 import {useState} from "react"
 import {isNotEmpty, useForm} from "@mantine/form"
+import {useDisclosure} from "@mantine/hooks";
 
 type Song = {
     duration_ms : number,
@@ -87,6 +101,9 @@ const afFields = [
 ] as const;
 
 export default function SongForm () {
+    const [opened, { open, close }] = useDisclosure(false);
+    const [streams, setStreams] = useState<number>(0);
+
     const form = useForm<Song> ({
         mode: "controlled",
         initialValues: {
@@ -130,132 +147,143 @@ export default function SongForm () {
         });
 
         const data = await res.json();
-        console.log(data);
+        setStreams(data["streams"]);
+        open();
     };
 
     return (
-        <Center>
-            <Card padding="xl" w="75%">
-                <Title>Song Performance Predictor</Title>
-                <form onSubmit={form.onSubmit(handleSubmit)}>
-                    <SimpleGrid cols={2}>
-                        <NumberInput
-                            label="Duration"
-                            description="Song length in milliseconds"
-                            min={0}
-                            {...form.getInputProps("duration_ms")}
-                            onChange={(value) =>
-                                form.setFieldValue("duration_ms", Number(value))
-                            }
-                        />
-                        <Select
-                            label="Rating"
-                            description="Whether the song contains explicit content"
-                            data={[
-                                { value: "true", label: "Explicit" },
-                                { value: "false", label: "Non-Explicit" },
-                            ]}
-                            value={String(form.values.explicit)}
-                            onChange={(value) =>
-                                form.setFieldValue("explicit", value === "true")
-                            }
-                        />
-                        <NumberInput
-                            label="Tempo"
-                            description="The tempo of the track in beats per minute (BPM)."
-                            min={0}
-                            {...form.getInputProps("af_tempo")}
-                            onChange={(value) =>
-                                form.setFieldValue("af_tempo", Number(value))
-                            }
-                        />
-                        <Select
-                            label="Mode"
-                            description="Whether the song is in a major or minor key"
-                            data={[
-                                { value: 1, label: 'Major' },
-                                { value: 0, label: 'Minor' },
-                            ]}
-                            {...form.getInputProps("af_mode")}
-                            onChange={(value) =>
-                                form.setFieldValue("af_mode", Number(value))
-                            }
-                        />
-                        <Select
-                            label="Time Signature"
-                            description="Number of beats per musical measure"
-                            data={[
-                                { value: "3", label: "3/4" },
-                                { value: "4", label: "4/4" },
-                                { value: "5", label: "5/4" },
-                                { value: "6", label: "6/8" },
-                                { value: "7", label: "7/4" },
-                            ]}
-                            {...form.getInputProps("af_time_signature")}
-                            onChange={(value) =>
-                                form.setFieldValue("af_time_signature", Number(value))
-                            }
-                        />
-                        <Select
-                            label="Key"
-                            description="Musical key of the song"
-                            data={[
-                                { value: "0", label: "C" },
-                                { value: "1", label: "C♯ / D♭" },
-                                { value: "2", label: "D" },
-                                { value: "3", label: "D♯ / E♭" },
-                                { value: "4", label: "E" },
-                                { value: "5", label: "F" },
-                                { value: "6", label: "F♯ / G♭" },
-                                { value: "7", label: "G" },
-                                { value: "8", label: "G♯ / A♭" },
-                                { value: "9", label: "A" },
-                                { value: "10", label: "A♯ / B♭" },
-                                { value: "11", label: "B" },
-                            ]}
-                            {...form.getInputProps("af_key")}
-                            onChange={(value) =>
-                                form.setFieldValue("af_key", Number(value))
-                            }
-                        />
-                        {afFields.map((field) => (
-                            <Group key={field.name}>
-                                <NumberInput
-                                    label={field.label}
-                                    description={field.description}
-                                    min={field.min}
-                                    max={field.max}
-                                    step={field.step}
-                                    decimalScale={2}
-                                    {...form.getInputProps(field.name)}
-                                    w="30%"
-                                    onChange={(value) =>
-                                        form.setFieldValue(field.name, Number(value))
-                                    }
-                                />
-                                <Slider
-                                    color="green"
-                                    min={field.min}
-                                    max={field.max}
-                                    step={field.step}
-                                    label={(value) => `${Number((value * 100).toFixed(2))}%`}
-                                    {...form.getInputProps(field.name)}
-                                    onChange={(value) =>
-                                        form.setFieldValue(field.name, Number(value))
-                                    }
-                                    flex={1}
-                                />
-                            </Group>
-                        ))}
-                    </SimpleGrid>
-                    <Center>
-                        <Button color="green" type="submit" mt="xl">
-                            Predict!
-                        </Button>
-                    </Center>
-                </form>
-            </Card>
-        </Center>
-
+        <>
+            <Modal opened={opened} onClose={close} centered withCloseButton={false}>
+                <Center>
+                    {streams ? (
+                        <Text><b>Streams: </b>{streams}</Text>
+                    ) : (
+                        <Text>No prediction found.</Text>
+                    )}
+                </Center>
+            </Modal>
+            <Center>
+                <Card padding="xl" w="75%">
+                    <Title>Song Performance Predictor</Title>
+                    <form onSubmit={form.onSubmit(handleSubmit)}>
+                        <SimpleGrid cols={2}>
+                            <NumberInput
+                                label="Duration"
+                                description="Song length in milliseconds"
+                                min={0}
+                                {...form.getInputProps("duration_ms")}
+                                onChange={(value) =>
+                                    form.setFieldValue("duration_ms", Number(value))
+                                }
+                            />
+                            <Select
+                                label="Rating"
+                                description="Whether the song contains explicit content"
+                                data={[
+                                    { value: "true", label: "Explicit" },
+                                    { value: "false", label: "Non-Explicit" },
+                                ]}
+                                value={String(form.values.explicit)}
+                                onChange={(value) =>
+                                    form.setFieldValue("explicit", value === "true")
+                                }
+                            />
+                            <NumberInput
+                                label="Tempo"
+                                description="The tempo of the track in beats per minute (BPM)."
+                                min={0}
+                                {...form.getInputProps("af_tempo")}
+                                onChange={(value) =>
+                                    form.setFieldValue("af_tempo", Number(value))
+                                }
+                            />
+                            <Select
+                                label="Mode"
+                                description="Whether the song is in a major or minor key"
+                                data={[
+                                    { value: 1, label: 'Major' },
+                                    { value: 0, label: 'Minor' },
+                                ]}
+                                {...form.getInputProps("af_mode")}
+                                onChange={(value) =>
+                                    form.setFieldValue("af_mode", Number(value))
+                                }
+                            />
+                            <Select
+                                label="Time Signature"
+                                description="Number of beats per musical measure"
+                                data={[
+                                    { value: "3", label: "3/4" },
+                                    { value: "4", label: "4/4" },
+                                    { value: "5", label: "5/4" },
+                                    { value: "6", label: "6/8" },
+                                    { value: "7", label: "7/4" },
+                                ]}
+                                {...form.getInputProps("af_time_signature")}
+                                onChange={(value) =>
+                                    form.setFieldValue("af_time_signature", Number(value))
+                                }
+                            />
+                            <Select
+                                label="Key"
+                                description="Musical key of the song"
+                                data={[
+                                    { value: "0", label: "C" },
+                                    { value: "1", label: "C♯ / D♭" },
+                                    { value: "2", label: "D" },
+                                    { value: "3", label: "D♯ / E♭" },
+                                    { value: "4", label: "E" },
+                                    { value: "5", label: "F" },
+                                    { value: "6", label: "F♯ / G♭" },
+                                    { value: "7", label: "G" },
+                                    { value: "8", label: "G♯ / A♭" },
+                                    { value: "9", label: "A" },
+                                    { value: "10", label: "A♯ / B♭" },
+                                    { value: "11", label: "B" },
+                                ]}
+                                {...form.getInputProps("af_key")}
+                                onChange={(value) =>
+                                    form.setFieldValue("af_key", Number(value))
+                                }
+                            />
+                            {afFields.map((field) => (
+                                <Group key={field.name}>
+                                    <NumberInput
+                                        label={field.label}
+                                        description={field.description}
+                                        min={field.min}
+                                        max={field.max}
+                                        step={field.step}
+                                        decimalScale={2}
+                                        {...form.getInputProps(field.name)}
+                                        w="30%"
+                                        onChange={(value) =>
+                                            form.setFieldValue(field.name, Number(value))
+                                        }
+                                    />
+                                    <Slider
+                                        color="green"
+                                        min={field.min}
+                                        max={field.max}
+                                        step={field.step}
+                                        label={(value) => `${Number((value * 100).toFixed(2))}%`}
+                                        {...form.getInputProps(field.name)}
+                                        onChange={(value) =>
+                                            form.setFieldValue(field.name, Number(value))
+                                        }
+                                        flex={1}
+                                    />
+                                </Group>
+                            ))}
+                        </SimpleGrid>
+                        <Center>
+                            <Button color="green" type="submit" mt="xl" size="lg">
+                                Predict!
+                            </Button>
+                        </Center>
+                    </form>
+                </Card>
+            </Center>
+        </>
     )
 }

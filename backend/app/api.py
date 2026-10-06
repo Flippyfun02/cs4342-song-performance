@@ -1,6 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from pathlib import Path
+import joblib
+import numpy as np
+import pandas as pd
 
 app = FastAPI()
 
@@ -31,17 +35,21 @@ class SongRequest(BaseModel):
 class SongResponse(BaseModel):
     streams: float
 
-# TODO: replace with real model
-class Model:
-    @staticmethod
-    def predict(song: SongRequest):
-        return 10000
+FEATURES = [
+    "duration_ms", "explicit", "af_danceability", "af_energy", "af_key",
+    "af_loudness", "af_mode", "af_speechiness", "af_acousticness",
+    "af_instrumentalness", "af_liveness", "af_valence", "af_tempo",
+    "af_time_signature",
+]
+
+MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "song_model.joblib"
+model = joblib.load(MODEL_PATH)
 
 @app.post("/predict", response_model=SongResponse)
 def predict(req: SongRequest):
-    model = Model() # TODO: replace with real model
-    return {"streams": model.predict(req)}
-
-@app.get("/test")
-def test():
-    return "works"
+    row = req.model_dump()
+    row["explicit"] = int(row["explicit"])
+    X = pd.DataFrame([row], columns=FEATURES)
+    log_streams = model.predict(X)[0]
+    streams = float(np.expm1(log_streams))
+    return {"streams": round(streams)}
